@@ -62,7 +62,7 @@ jobs:
         TIMESTAMP=$(date -u +'%Y-%m-%d %H:%M:%S UTC')
         PORT_INPUT="${{ github.event.inputs.server_port }}"
         if [ -z "$PORT_INPUT" ]; then
-          PORT_INPUT="3100"
+          PORT_INPUT="3200"
         fi
 
         echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
