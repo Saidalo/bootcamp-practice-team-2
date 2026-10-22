@@ -7,13 +7,24 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
+import java.time.Instant;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "Invalid request parameter",
+                ex.getMessage(),
+                Instant.now()
+        );
+        return ResponseEntity.badRequest().body(error);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiError> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         StringBuilder strBuilder = new StringBuilder();
 
         e.getBindingResult().getAllErrors().forEach(error -> {
@@ -28,6 +39,12 @@ public class GlobalExceptionHandler {
         });
 
         String errors = strBuilder.substring(0, strBuilder.length() - 1);
-        return new ResponseEntity<>(Map.of("errors", errors), HttpStatus.BAD_REQUEST);
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "Validation failed",
+                errors,
+                Instant.now()
+        );
+        return ResponseEntity.badRequest().body(apiError);
     }
 }
