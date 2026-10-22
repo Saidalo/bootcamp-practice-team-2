@@ -8,7 +8,7 @@ on:
       container_name:
         description: 'Docker container name'
         required: false
-        default: 'acn-bootcamp-app'
+        default: 'acn-bootcamp-team-2'
       server_port:
         description: 'Application port'
         required: false
@@ -29,7 +29,7 @@ jobs:
       run:
         working-directory: DemoBankingApplication
     env:
-      APP_CONTAINER_NAME: ${{ github.event.inputs.container_name || 'acn-bootcamp-app' }}
+      APP_CONTAINER_NAME: ${{ github.event.inputs.container_name || 'acn-bootcamp-team-2' }}
       APP_IMAGE_NAME: acn-bootcamp-team-2
     
     steps:
