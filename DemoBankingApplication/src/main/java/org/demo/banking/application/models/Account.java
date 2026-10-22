@@ -11,5 +11,5 @@ public class Account {
     private long id;
     private String iban;
     private String ownerName;
-    private double balance;
+    private BigDecimal balance;
 }
