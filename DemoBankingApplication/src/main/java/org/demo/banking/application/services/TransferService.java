@@ -1,7 +1,7 @@
 package org.demo.banking.application.services;
 
-import org.demo.banking.application.exceptions.InsufficientFundsException;
-import org.demo.banking.application.exceptions.InvalidTransferException;
+import org.demo.banking.application.exception.InsufficientFundsException;
+import org.demo.banking.application.exception.InvalidRequestException;
 import org.demo.banking.application.models.Account;
 import org.demo.banking.application.models.Transaction;
 import org.demo.banking.application.models.TransactionType;
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Money transfers between accounts and the transaction history.
  * Every transfer creates two transactions: TRANSFER_OUT for the sender and TRANSFER_IN for the receiver.
  *
- * @author Karyna Litvinova
+ * @author Karena Litvinova
  */
 @Service
 public class TransferService {
@@ -83,14 +83,12 @@ public class TransferService {
     }
 
     /**
-     * Same as transfer(), but accounts are found by IBAN (TransferRequestDTO sends account numbers as text).
+     * Same as transfer(), but accounts come as text from TransferRequestDTO:
+     * either the account id ("1") or the IBAN ("LT60...").
      */
-    public Transaction transferByIban(String fromIban, String toIban, BigDecimal amount, String note) {
-        if (fromIban == null || fromIban.isBlank() || toIban == null || toIban.isBlank()) {
-            throw new InvalidTransferException("Both account IBANs are required");
-        }
-        Account from = accountService.getAccountByIban(fromIban);
-        Account to = accountService.getAccountByIban(toIban);
+    public Transaction transfer(String fromAccount, String toAccount, BigDecimal amount, String note) {
+        Account from = findAccount(fromAccount);
+        Account to = findAccount(toAccount);
         return transfer(from.getId(), to.getId(), amount, note);
     }
 
@@ -105,21 +103,32 @@ public class TransferService {
         return result;
     }
 
+    private Account findAccount(String account) {
+        if (account == null || account.isBlank()) {
+            throw new InvalidRequestException("Both accounts are required");
+        }
+        String value = account.trim();
+        if (value.matches("\\d{1,18}")) {
+            return accountService.getAccountById(Long.parseLong(value));
+        }
+        return accountService.getAccountByIban(value);
+    }
+
     private void validate(Long fromId, Long toId, BigDecimal amount, String note) {
         if (fromId == null || toId == null) {
-            throw new InvalidTransferException("Both accounts are required");
+            throw new InvalidRequestException("Both accounts are required");
         }
         if (fromId.equals(toId)) {
-            throw new InvalidTransferException("Cannot transfer to the same account");
+            throw new InvalidRequestException("Cannot transfer to the same account");
         }
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new InvalidTransferException("Amount must be greater than 0");
+            throw new InvalidRequestException("Amount must be greater than 0");
         }
         if (amount.stripTrailingZeros().scale() > 2) {
-            throw new InvalidTransferException("Amount can have at most 2 decimal places");
+            throw new InvalidRequestException("Amount can have at most 2 decimal places");
         }
         if (note != null && note.length() > MAX_NOTE_LENGTH) {
-            throw new InvalidTransferException("Note can be at most " + MAX_NOTE_LENGTH + " characters");
+            throw new InvalidRequestException("Note can be at most " + MAX_NOTE_LENGTH + " characters");
         }
     }
 

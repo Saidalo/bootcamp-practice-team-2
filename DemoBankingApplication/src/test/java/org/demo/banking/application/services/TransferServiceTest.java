@@ -1,8 +1,8 @@
 package org.demo.banking.application.services;
 
-import org.demo.banking.application.exceptions.AccountNotFoundException;
-import org.demo.banking.application.exceptions.InsufficientFundsException;
-import org.demo.banking.application.exceptions.InvalidTransferException;
+import org.demo.banking.application.exception.AccountNotFoundException;
+import org.demo.banking.application.exception.InsufficientFundsException;
+import org.demo.banking.application.exception.InvalidRequestException;
 import org.demo.banking.application.models.Account;
 import org.demo.banking.application.models.Transaction;
 import org.demo.banking.application.models.TransactionType;
@@ -35,8 +35,8 @@ class TransferServiceTest {
     void setUp() {
         accountService = new AccountService();
         transferService = new TransferService(accountService);
-        anna = accountService.createAccount("Anna", new BigDecimal("100.00"));
-        peter = accountService.createAccount("Peter", new BigDecimal("10.00"));
+        anna = accountService.createAccount("Anna", "LT601010012345678901", new BigDecimal("100.00"));
+        peter = accountService.createAccount("Peter", "LT217300010000000002", new BigDecimal("10.00"));
     }
 
     @Test
@@ -114,21 +114,21 @@ class TransferServiceTest {
     @ParameterizedTest
     @ValueSource(strings = {"0", "-5", "1.005"})
     void wrongAmountIsRejected(String amount) {
-        assertThrows(InvalidTransferException.class,
+        assertThrows(InvalidRequestException.class,
                 () -> transferService.transfer(anna.getId(), peter.getId(), new BigDecimal(amount), null));
     }
 
     @Test
     void missingValuesAreRejected() {
-        assertThrows(InvalidTransferException.class,
+        assertThrows(InvalidRequestException.class,
                 () -> transferService.transfer(anna.getId(), peter.getId(), null, null));
-        assertThrows(InvalidTransferException.class,
+        assertThrows(InvalidRequestException.class,
                 () -> transferService.transfer(null, peter.getId(), BigDecimal.ONE, null));
     }
 
     @Test
     void sameAccountIsRejected() {
-        assertThrows(InvalidTransferException.class,
+        assertThrows(InvalidRequestException.class,
                 () -> transferService.transfer(anna.getId(), anna.getId(), BigDecimal.ONE, null));
     }
 
@@ -136,7 +136,7 @@ class TransferServiceTest {
     void tooLongNoteIsRejected() {
         String note = "a".repeat(141);
 
-        assertThrows(InvalidTransferException.class,
+        assertThrows(InvalidRequestException.class,
                 () -> transferService.transfer(anna.getId(), peter.getId(), BigDecimal.ONE, note));
     }
 
@@ -151,16 +151,25 @@ class TransferServiceTest {
 
     @Test
     void transferByIbanWorks() {
-        transferService.transferByIban(anna.getIban(), peter.getIban().toLowerCase(), new BigDecimal("20"), null);
+        transferService.transfer("LT601010012345678901", "lt21 7300 0100 0000 0002", new BigDecimal("20"), null);
 
         assertEquals(new BigDecimal("80.00"), anna.getBalance());
         assertEquals(new BigDecimal("30.00"), peter.getBalance());
     }
 
     @Test
+    void transferByIdAsTextWorks() {
+        transferService.transfer(String.valueOf(anna.getId()), String.valueOf(peter.getId()), new BigDecimal("1"), null);
+
+        assertEquals(new BigDecimal("99.00"), anna.getBalance());
+    }
+
+    @Test
     void unknownIbanIsRejected() {
         assertThrows(AccountNotFoundException.class,
-                () -> transferService.transferByIban(anna.getIban(), "LT0000", BigDecimal.ONE, null));
+                () -> transferService.transfer("LT601010012345678901", "LT0000", BigDecimal.ONE, null));
+        assertThrows(InvalidRequestException.class,
+                () -> transferService.transfer("LT601010012345678901", " ", BigDecimal.ONE, null));
     }
 
     // 4 threads send money in both directions at the same time.
@@ -168,8 +177,8 @@ class TransferServiceTest {
     @Test
     @Timeout(10)
     void parallelTransfersKeepTotalMoney() throws InterruptedException {
-        Account a = accountService.createAccount("A", new BigDecimal("1000.00"));
-        Account b = accountService.createAccount("B", new BigDecimal("1000.00"));
+        Account a = accountService.createAccount("A", null, new BigDecimal("1000.00"));
+        Account b = accountService.createAccount("B", null, new BigDecimal("1000.00"));
         int threads = 4;
         int transfersPerThread = 250;
 
