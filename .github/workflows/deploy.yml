@@ -19,7 +19,7 @@ on:
         default: '5'
 
 concurrency:
-  group: deploy-${{ github.ref_name }}
+  group: deploy-team-2
   cancel-in-progress: true
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
         working-directory: DemoBankingApplication
     env:
       APP_CONTAINER_NAME: ${{ github.event.inputs.container_name || 'acn-bootcamp-app' }}
-      APP_IMAGE_NAME: acn-bootcamp-app
+      APP_IMAGE_NAME: acn-bootcamp-team-2
     
     steps:
     - name: Checkout code
