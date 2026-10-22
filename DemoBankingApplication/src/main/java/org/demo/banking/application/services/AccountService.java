@@ -22,7 +22,7 @@ public class AccountService {
         account.setId(generatedId.getAndIncrement());
         account.setIban("LT" + UUID.randomUUID().toString().substring(0, 16).replace("-", ""));
         account.setOwnerName(ownerName);
-        account.setBalance(curBalance != null ? curBalance : 0.0);
+        account.setBalance(curBalance);
 
         accountStorage.put(account.getId(), account);
         return account;
