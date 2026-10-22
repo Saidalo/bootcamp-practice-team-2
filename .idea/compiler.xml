@@ -10,6 +10,15 @@
         <module name="DemoBankingApplictiion.test" />
         <module name="DemoBankingApplictiion.main" />
       </profile>
+      <profile name="Annotation profile for DemoBankingApplication" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="application" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="DemoBankingApplictiion" target="21" />
@@ -20,6 +29,7 @@
       <module name="DemoBankingApplictiion" options="-parameters" />
       <module name="DemoBankingApplictiion.main" options="-parameters" />
       <module name="DemoBankingApplictiion.test" options="-parameters" />
+      <module name="application" options="-parameters" />
     </option>
   </component>
 </project>
